@@ -13,8 +13,19 @@ namespace Univali.Api
 
         private Data()
         {
-            Customers = new List<Customer>();
-            
+            Customers = new List<Customer>
+            {
+                new Customer{
+                    Id = 1,
+                    Name = "Joao",
+                    Cpf = "128975641"
+                },
+                new Customer{
+                    Id = 2,
+                    Name = "Renan",
+                    Cpf = "751478625"
+                }
+            };
 
         }
 
