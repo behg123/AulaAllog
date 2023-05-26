@@ -14,7 +14,7 @@ public class CustomersController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("id/{id}")]
+    [HttpGet("id/{id}", Name = "GetCustomerById")]
     public ActionResult<Customer> GetCustomerById([FromRoute] int id)
     {
         var result = Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == id);
@@ -32,7 +32,7 @@ public class CustomersController : ControllerBase
         return result != null ? Ok(result) : NotFound();
     }
     [HttpPost]
-    public ActionResult<Customer> CreateCustomer([FromBody] Customer customer)
+    public ActionResult<Customer> CreateCustomer(Customer customer)
     {
         var newCustomer = new Customer
         {
@@ -43,7 +43,12 @@ public class CustomersController : ControllerBase
         };
 
         Data.instanceAcess().Customers.Add(newCustomer);
-        return Ok(newCustomer);
+        return CreatedAtRoute
+        (
+            "GetCustomerById",
+            new {id = newCustomer.Id},
+            newCustomer
+        );
     }
     
 }
