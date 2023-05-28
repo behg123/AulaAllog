@@ -1,4 +1,4 @@
-namespace Unvali.Api.Entities;
+namespace Univali.Api.Entities;
 
 public class Customer
 {
@@ -6,3 +6,4 @@ public class Customer
     public string Name {get; set;}
     public string Cpf {get; set;}
 }
+

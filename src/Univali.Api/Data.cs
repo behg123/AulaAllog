@@ -1,5 +1,5 @@
 using Univali.Api.Controllers;
-using Unvali.Api.Entities;
+using Univali.Api.Entities;
 
 namespace Univali.Api
 {
@@ -8,8 +8,6 @@ namespace Univali.Api
     {
         public List<Customer> Customers {get; set;}
         private static Data instance = new Data();
-
-        public  CustomersController data = new CustomersController();
 
         private Data()
         {

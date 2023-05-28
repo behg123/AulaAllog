@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Unvali.Api.Entities;
+using Univali.Api.Entities;
+using Univali.Api.Repositories;
+using Univali.Api.Interfaces;
 
 namespace Univali.Api.Controllers;
 
@@ -7,10 +9,12 @@ namespace Univali.Api.Controllers;
 [Route("Api/customers")]
 public class CustomersController : ControllerBase
 {
+    private readonly CustomerRepository _customerRepository;
+
     [HttpGet]
     public ActionResult<IEnumerable<Customer>> GetCustomers()
     {
-        var result = Data.instanceAcess().Customers;
+        var result = _customerRepository.GetCustomer();
         return Ok(result);
     }
 
@@ -19,10 +23,9 @@ public class CustomersController : ControllerBase
     {
         var result = Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == id);
 
-
         return result != null ? Ok(result) : NotFound();
-    }    
-    
+    }
+
     [HttpGet("cpf/{cpf}")]
     public ActionResult<Customer> GetCustomerByCpdf([FromRoute] string cpf)
     {
@@ -46,10 +49,29 @@ public class CustomersController : ControllerBase
         return CreatedAtRoute
         (
             "GetCustomerById",
-            new {id = newCustomer.Id},
+            new { id = newCustomer.Id },
             newCustomer
         );
     }
-    
+
+    [HttpDelete("delete/{id}")]
+    public ActionResult<Customer> DeleteCustomer([FromRoute] int id)
+    {
+        var customer = GetCustomerById(id).Value as Customer;
+        if (customer == null)
+        {
+            return NotFound();
+        }
+
+        Data.instanceAcess().Customers.Remove(customer);
+
+        return NoContent();
+
+    }
+
+    // [HttpPut("update/{id}")]
+    // public ActionResult<Customers> UpdateCustoner([FromRoute] int id){
+
+    // }
 }
 
