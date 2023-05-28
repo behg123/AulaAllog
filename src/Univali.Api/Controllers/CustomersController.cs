@@ -9,12 +9,10 @@ namespace Univali.Api.Controllers;
 [Route("Api/customers")]
 public class CustomersController : ControllerBase
 {
-    private readonly CustomerRepository _customerRepository;
-
     [HttpGet]
     public ActionResult<IEnumerable<Customer>> GetCustomers()
     {
-        var result = _customerRepository.GetCustomer();
+        var result = Data.instanceAcess().Customers;
         return Ok(result);
     }
 
