@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Univali.Api.Entities;
-using Univali.Api.Repositories;
-using Univali.Api.Interfaces;
+using Univali.Api.Dto;
+
 
 namespace Univali.Api.Controllers;
 
@@ -16,10 +16,11 @@ public class CustomersController : ControllerBase
         return Ok(result);
     }
 
+
     [HttpGet("id/{id}", Name = "GetCustomerById")]
     public ActionResult<Customer> GetCustomerById([FromRoute] int id)
     {
-        var result = Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == id);
+        var result = FindCustomerById(id);
 
         return result != null ? Ok(result) : NotFound();
     }
@@ -27,7 +28,7 @@ public class CustomersController : ControllerBase
     [HttpGet("cpf/{cpf}")]
     public ActionResult<Customer> GetCustomerByCpdf([FromRoute] string cpf)
     {
-        var result = Data.instanceAcess().Customers.FirstOrDefault(c => c.Cpf == cpf);
+        var result = FindCustomerByCpf(cpf);
 
 
         return result != null ? Ok(result) : NotFound();
@@ -55,7 +56,7 @@ public class CustomersController : ControllerBase
     [HttpDelete("delete/{id}")]
     public ActionResult<Customer> DeleteCustomer([FromRoute] int id)
     {
-        var customer = GetCustomerById(id).Value as Customer;
+        var customer = FindCustomerById(id);
         if (customer == null)
         {
             return NotFound();
@@ -67,9 +68,42 @@ public class CustomersController : ControllerBase
 
     }
 
-    // [HttpPut("update/{id}")]
-    // public ActionResult<Customers> UpdateCustoner([FromRoute] int id){
 
-    // }
+
+    [HttpPut("update/{id}")]
+    public ActionResult<Customer> UpdateCustoner([FromRoute] int id, [FromBody] CustomerDto updatedCustomer)
+    {
+        var customer = FindCustomerById(id);
+        if (customer == null)
+        {
+            return NotFound();
+        }
+        ConvertToCustomer(id, updatedCustomer);
+
+        return Ok(customer);
+
+
+    }
+
+    private Customer FindCustomerById(int id)
+    {
+        return Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == id);
+    }
+
+    private Customer FindCustomerByCpf(String cpf)
+    {
+        return Data.instanceAcess().Customers.FirstOrDefault(c => c.Cpf == cpf);
+    }
+    private Customer ConvertToCustomer(int customerId, CustomerDto customerDto)
+    {
+        var customer = new Customer
+        {
+            Id = customerId,
+            Name = customerDto.Name,
+            Cpf = customerDto.Cpf
+        };
+
+        return customer;
+    }
 }
 
