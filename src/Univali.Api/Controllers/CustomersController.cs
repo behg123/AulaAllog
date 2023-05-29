@@ -13,7 +13,7 @@ public class CustomersController : ControllerBase
     public ActionResult<IEnumerable<CustomerDto>> GetCustomers()
     {
         var result = Data.instanceAcess().Customers;
-        var customerDtos = result.Select(customer => ConvertToCustomerDto(customer));
+        var customerDtos = result.Select(customer => ConvertToCustomerDto(customer)).ToList();
 
         return Ok(customerDtos);
     }
