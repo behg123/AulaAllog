@@ -24,7 +24,7 @@ public class CustomersController : ControllerBase
     public ActionResult<CustomerDto> GetCustomerById([FromRoute] int id)
     {
         var result = FindCustomerById(id);
-         var customerDto = ConvertToCustomerDto(result);
+        var customerDto = ConvertToCustomerDto(result);
 
         return customerDto != null ? Ok(result) : NotFound();
     }
@@ -78,24 +78,22 @@ public class CustomersController : ControllerBase
     }
 
 
-[HttpPut("update/{id}")]
-public ActionResult<CustomerDto> UpdateCustomer([FromRoute] int id, [FromBody] CustomerDto updatedCustomer)
-{
-    var customer = FindCustomerById(id);
-    if (customer == null)
+    [HttpPut("update/{id}")]
+    public ActionResult<CustomerDto> UpdateCustomer([FromRoute] int id, [FromBody] CustomerDto updatedCustomer)
     {
-        return NotFound();
+        var customer = FindCustomerById(id);
+        if (customer == null)
+        {
+            return NotFound();
+        }
+
+        customer.Name = updatedCustomer.Name;
+        customer.Cpf = updatedCustomer.Cpf;
+
+        var updatedCustomerDto = ConvertToCustomerDto(customer);
+
+        return Ok(updatedCustomerDto);
     }
-
-    // Update the customer object with the values from the updatedCustomer object
-    customer.Name = updatedCustomer.Name;
-    customer.Cpf = updatedCustomer.Cpf;
-
-    // Convert the updated customer object to CustomerDto
-    var updatedCustomerDto = ConvertToCustomerDto(customer);
-
-    return Ok(updatedCustomerDto);
-}
 
     private Customer FindCustomerById(int id)
     {
