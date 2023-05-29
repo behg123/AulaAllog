@@ -15,22 +15,25 @@ public class CustomersController : ControllerBase
         var result = Data.instanceAcess().Customers;
         var customerDtos = result.Select(customer => ConvertToCustomerDto(customer));
 
-
         return Ok(customerDtos);
     }
 
 
-    [HttpGet("id/{id}", Name = "GetCustomerById")]
-    public ActionResult<CustomerDto> GetCustomerById([FromRoute] int id)
+    [HttpGet("{id}", Name = "GetCustomerById")]
+    public ActionResult<CustomerDto> GetCustomerById(int id)
     {
         var result = FindCustomerById(id);
+        if(result == null){
+            return NotFound();
+        }
+
         var customerDto = ConvertToCustomerDto(result);
 
-        return customerDto != null ? Ok(result) : NotFound();
+        return Ok(result);
     }
 
     [HttpGet("cpf/{cpf}")]
-    public ActionResult<CustomerDto> GetCustomerByCpdf([FromRoute] string cpf)
+    public ActionResult<CustomerDto> GetCustomerByCpf(string cpf)
     {
         var result = FindCustomerByCpf(cpf);
         var customerDto = ConvertToCustomerDto(result);
@@ -39,7 +42,7 @@ public class CustomersController : ControllerBase
     }
 
     [HttpPost]
-    public ActionResult<CustomerDto> CreateCustomer([FromBody] CustomerDto customer)
+    public ActionResult<CustomerDto> CreateCustomer(CustomerForCreateDto customer)
     {
         var newCustomer = new Customer
         {
@@ -61,8 +64,8 @@ public class CustomersController : ControllerBase
         );
     }
 
-    [HttpDelete("delete/{id}")]
-    public ActionResult<CustomerDto> DeleteCustomer([FromRoute] int id)
+    [HttpDelete("{id}")]
+    public ActionResult<CustomerDto> DeleteCustomer(int id)
     {
         var customer = FindCustomerById(id);
 
@@ -78,9 +81,10 @@ public class CustomersController : ControllerBase
     }
 
 
-    [HttpPut("update/{id}")]
-    public ActionResult<CustomerDto> UpdateCustomer([FromRoute] int id, [FromBody] CustomerDto updatedCustomer)
+    [HttpPut("{id}")]
+    public ActionResult<CustomerDto> UpdateCustomer(int id, CustomerForUpdateDto updatedCustomer)
     {
+
         var customer = FindCustomerById(id);
         if (customer == null)
         {
@@ -97,12 +101,12 @@ public class CustomersController : ControllerBase
 
     private Customer FindCustomerById(int id)
     {
-        return Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == id);
+        return Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == id)!;
     }
 
     private Customer FindCustomerByCpf(String cpf)
     {
-        return Data.instanceAcess().Customers.FirstOrDefault(c => c.Cpf == cpf);
+        return Data.instanceAcess().Customers.FirstOrDefault(c => c.Cpf == cpf)!;
     }
 
     private CustomerDto ConvertToCustomerDto(Customer customer)
