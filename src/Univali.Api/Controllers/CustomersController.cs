@@ -10,31 +10,36 @@ namespace Univali.Api.Controllers;
 public class CustomersController : ControllerBase
 {
     [HttpGet]
-    public ActionResult<IEnumerable<Customer>> GetCustomers()
+    public ActionResult<IEnumerable<CustomerDto>> GetCustomers()
     {
         var result = Data.instanceAcess().Customers;
-        return Ok(result);
+        var customerDtos = result.Select(customer => ConvertToCustomerDto(customer));
+
+
+        return Ok(customerDtos);
     }
 
 
     [HttpGet("id/{id}", Name = "GetCustomerById")]
-    public ActionResult<Customer> GetCustomerById([FromRoute] int id)
+    public ActionResult<CustomerDto> GetCustomerById([FromRoute] int id)
     {
         var result = FindCustomerById(id);
+         var customerDto = ConvertToCustomerDto(result);
 
-        return result != null ? Ok(result) : NotFound();
+        return customerDto != null ? Ok(result) : NotFound();
     }
 
     [HttpGet("cpf/{cpf}")]
-    public ActionResult<Customer> GetCustomerByCpdf([FromRoute] string cpf)
+    public ActionResult<CustomerDto> GetCustomerByCpdf([FromRoute] string cpf)
     {
         var result = FindCustomerByCpf(cpf);
+        var customerDto = ConvertToCustomerDto(result);
 
-
-        return result != null ? Ok(result) : NotFound();
+        return customerDto != null ? Ok(result) : NotFound();
     }
+
     [HttpPost]
-    public ActionResult<Customer> CreateCustomer(Customer customer)
+    public ActionResult<CustomerDto> CreateCustomer([FromBody] CustomerDto customer)
     {
         var newCustomer = new Customer
         {
@@ -44,19 +49,23 @@ public class CustomersController : ControllerBase
 
         };
 
+        var newCustomerDto = ConvertToCustomerDto(newCustomer);
+
         Data.instanceAcess().Customers.Add(newCustomer);
+
         return CreatedAtRoute
         (
             "GetCustomerById",
-            new { id = newCustomer.Id },
-            newCustomer
+            new { id = newCustomerDto.Id },
+            newCustomerDto
         );
     }
 
     [HttpDelete("delete/{id}")]
-    public ActionResult<Customer> DeleteCustomer([FromRoute] int id)
+    public ActionResult<CustomerDto> DeleteCustomer([FromRoute] int id)
     {
         var customer = FindCustomerById(id);
+
         if (customer == null)
         {
             return NotFound();
@@ -69,21 +78,24 @@ public class CustomersController : ControllerBase
     }
 
 
-
-    [HttpPut("update/{id}")]
-    public ActionResult<Customer> UpdateCustoner([FromRoute] int id, [FromBody] CustomerDto updatedCustomer)
+[HttpPut("update/{id}")]
+public ActionResult<CustomerDto> UpdateCustomer([FromRoute] int id, [FromBody] CustomerDto updatedCustomer)
+{
+    var customer = FindCustomerById(id);
+    if (customer == null)
     {
-        var customer = FindCustomerById(id);
-        if (customer == null)
-        {
-            return NotFound();
-        }
-        ConvertToCustomer(id, updatedCustomer);
-
-        return Ok(customer);
-
-
+        return NotFound();
     }
+
+    // Update the customer object with the values from the updatedCustomer object
+    customer.Name = updatedCustomer.Name;
+    customer.Cpf = updatedCustomer.Cpf;
+
+    // Convert the updated customer object to CustomerDto
+    var updatedCustomerDto = ConvertToCustomerDto(customer);
+
+    return Ok(updatedCustomerDto);
+}
 
     private Customer FindCustomerById(int id)
     {
@@ -94,16 +106,30 @@ public class CustomersController : ControllerBase
     {
         return Data.instanceAcess().Customers.FirstOrDefault(c => c.Cpf == cpf);
     }
-    private Customer ConvertToCustomer(int customerId, CustomerDto customerDto)
+
+    private CustomerDto ConvertToCustomerDto(Customer customer)
     {
-        var customer = new Customer
+        var customerDto = new CustomerDto
         {
-            Id = customerId,
+            Id = customer.Id,
+            Name = customer.Name,
+            Cpf = customer.Cpf
+        };
+
+        return customerDto;
+    }
+
+    private Customer ConvertToCustomer(CustomerDto customerDto)
+    {
+        var newCustomer = new Customer
+        {
+            Id = customerDto.Id,
             Name = customerDto.Name,
             Cpf = customerDto.Cpf
         };
 
-        return customer;
+        return newCustomer;
     }
+
 }
 
