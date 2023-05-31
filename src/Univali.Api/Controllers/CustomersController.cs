@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Univali.Api.Entities;
-using Univali.Api.Dto;
+using Univali.Api.Models;
 
 
 namespace Univali.Api.Controllers;
@@ -12,9 +12,8 @@ public class CustomersController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<CustomerDto>> GetCustomers()
     {
-        var result = Data.instanceAcess().Customers;
-        var customerDtos = result.Select(customer => ConvertToCustomerDto(customer)).ToList();
-
+        var customerFromDatabase = Data.instanceAcess().Customers;
+        var customerDtos = customerFromDatabase.Select(customer => ConvertToCustomerDto(customer)).ToList();
         return Ok(customerDtos);
     }
 
@@ -22,92 +21,83 @@ public class CustomersController : ControllerBase
     [HttpGet("{id}", Name = "GetCustomerById")]
     public ActionResult<CustomerDto> GetCustomerById(int id)
     {
-        var result = FindCustomerById(id);
-        if(result == null){
-            return NotFound();
-        }
-
-        var customerDto = ConvertToCustomerDto(result);
-
-        return Ok(result);
+        var customerFromDatabase = FindCustomerById(id);
+        if (customerFromDatabase == null) return NotFound();
+        var customerToReturn = ConvertToCustomerDto(customerFromDatabase);
+        return Ok(customerToReturn);
     }
+
 
     [HttpGet("cpf/{cpf}")]
     public ActionResult<CustomerDto> GetCustomerByCpf(string cpf)
     {
-        var result = FindCustomerByCpf(cpf);
-        var customerDto = ConvertToCustomerDto(result);
-
-        return customerDto != null ? Ok(result) : NotFound();
+        var customerFromDatabase = FindCustomerByCpf(cpf);
+        if (customerFromDatabase == null) return NotFound();
+        var customerToReturn = ConvertToCustomerDto(customerFromDatabase);
+        return Ok(customerToReturn);
     }
 
+
     [HttpPost]
-    public ActionResult<CustomerDto> CreateCustomer(CustomerForCreateDto customer)
+    public ActionResult<CustomerDto> CreateCustomer(CustomerForCreationDto customerForCreationDto)
     {
-        var newCustomer = new Customer
+        var customerEntity = new Customer
         {
             Id = Data.instanceAcess().Customers.Max(c => c.Id) + 1,
-            Name = customer.Name,
-            Cpf = customer.Cpf
-
+            Name = customerForCreationDto.Name,
+            Cpf = customerForCreationDto.Cpf
         };
+        Data.instanceAcess().Customers.Add(customerEntity);
 
-        var newCustomerDto = ConvertToCustomerDto(newCustomer);
-
-        Data.instanceAcess().Customers.Add(newCustomer);
+        var customerToReturn = ConvertToCustomerDto(customerEntity);
 
         return CreatedAtRoute
         (
             "GetCustomerById",
-            new { id = newCustomerDto.Id },
-            newCustomerDto
+            new { id = customerToReturn.Id },
+            customerToReturn
         );
-    }
-
-    [HttpDelete("{id}")]
-    public ActionResult<CustomerDto> DeleteCustomer(int id)
-    {
-        var customer = FindCustomerById(id);
-
-        if (customer == null)
-        {
-            return NotFound();
-        }
-
-        Data.instanceAcess().Customers.Remove(customer);
-
-        return NoContent();
-
     }
 
 
     [HttpPut("{id}")]
-    public ActionResult<CustomerDto> UpdateCustomer(int id, CustomerForUpdateDto updatedCustomer)
+    public ActionResult<CustomerDto> UpdateCustomer(int id, CustomerForUpdateDto customerForUpdateDto)
     {
+        if(id != customerForUpdateDto.Id) return BadRequest();
 
-        var customer = FindCustomerById(id);
-        if (customer == null)
-        {
-            return NotFound();
-        }
+        var customerFromDatabase = FindCustomerById(id);
+               
+        if (customerFromDatabase == null) return NotFound();
 
-        customer.Name = updatedCustomer.Name;
-        customer.Cpf = updatedCustomer.Cpf;
-
-        var updatedCustomerDto = ConvertToCustomerDto(customer);
-
-        return Ok(updatedCustomerDto);
+        customerFromDatabase.Name = customerForUpdateDto.Name;
+        customerFromDatabase.Cpf = customerForUpdateDto.Cpf;
+        var customerToReturn = ConvertToCustomerDto(customerFromDatabase);
+        return Ok(customerToReturn);
     }
+
+
+    [HttpDelete("{id}")]
+    public ActionResult<CustomerDto> DeleteCustomer(int id)
+    {
+        var customerFromDatabase = FindCustomerById(id);
+        if (customerFromDatabase == null) return NotFound();
+        Data.instanceAcess().Customers.Remove(customerFromDatabase);
+        return NoContent();
+    }
+
+
 
     private Customer FindCustomerById(int id)
     {
         return Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == id)!;
     }
 
+
     private Customer FindCustomerByCpf(String cpf)
     {
         return Data.instanceAcess().Customers.FirstOrDefault(c => c.Cpf == cpf)!;
     }
+
 
     private CustomerDto ConvertToCustomerDto(Customer customer)
     {
@@ -121,6 +111,7 @@ public class CustomersController : ControllerBase
         return customerDto;
     }
 
+
     private Customer ConvertToCustomer(CustomerDto customerDto)
     {
         var newCustomer = new Customer
@@ -132,6 +123,5 @@ public class CustomersController : ControllerBase
 
         return newCustomer;
     }
-
 }
 
