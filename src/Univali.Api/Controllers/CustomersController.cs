@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Univali.Api.Entities;
 using Univali.Api.Models;
@@ -48,9 +49,7 @@ public class CustomersController : ControllerBase
             Cpf = customerForCreationDto.Cpf
         };
         Data.instanceAcess().Customers.Add(customerEntity);
-
         var customerToReturn = ConvertToCustomerDto(customerEntity);
-
         return CreatedAtRoute
         (
             "GetCustomerById",
@@ -63,12 +62,9 @@ public class CustomersController : ControllerBase
     [HttpPut("{id}")]
     public ActionResult<CustomerDto> UpdateCustomer(int id, CustomerForUpdateDto customerForUpdateDto)
     {
-        if(id != customerForUpdateDto.Id) return BadRequest();
-
+        if (id != customerForUpdateDto.Id) return BadRequest();
         var customerFromDatabase = FindCustomerById(id);
-               
         if (customerFromDatabase == null) return NotFound();
-
         customerFromDatabase.Name = customerForUpdateDto.Name;
         customerFromDatabase.Cpf = customerForUpdateDto.Cpf;
         var customerToReturn = ConvertToCustomerDto(customerFromDatabase);
@@ -86,6 +82,28 @@ public class CustomersController : ControllerBase
     }
 
 
+
+    [HttpPatch("id")]
+    public ActionResult PartiallyUpdateCustomer([FromBody] JsonPatchDocument<CustomerForPatchDto> patchDocument, [FromRoute] int id)
+    {
+        var customerFromDatabase = FindCustomerById(id);
+
+        if (customerFromDatabase == null) return NotFound();
+
+        var customerToPatch = new CustomerForPatchDto()
+        {
+                Name = customerFromDatabase.Name,
+                Cpf = customerFromDatabase.Cpf,
+
+        };
+
+        patchDocument.ApplyTo(customerToPatch);
+
+        customerFromDatabase.Name = customerToPatch.Name;
+        customerFromDatabase.Cpf = customerToPatch.Cpf;
+
+        return NoContent();
+    }
 
     private Customer FindCustomerById(int id)
     {
@@ -123,5 +141,8 @@ public class CustomersController : ControllerBase
 
         return newCustomer;
     }
+
+
+
 }
 

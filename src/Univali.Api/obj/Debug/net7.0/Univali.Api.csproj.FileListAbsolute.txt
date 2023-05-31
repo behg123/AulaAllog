@@ -137,3 +137,7 @@ C:\Users\7628889\Documents\GitHub\AulaAllogSingleton\src\univali.api\obj\Debug\n
 C:\Users\7628889\Documents\GitHub\AulaAllogSingleton\src\univali.api\obj\Debug\net7.0\Univali.Api.pdb
 C:\Users\7628889\Documents\GitHub\AulaAllogSingleton\src\univali.api\obj\Debug\net7.0\Univali.Api.genruntimeconfig.cache
 C:\Users\7628889\Documents\GitHub\AulaAllogSingleton\src\univali.api\obj\Debug\net7.0\ref\Univali.Api.dll
+C:\Users\7628889\Documents\GitHub\AulaAllogSingleton\src\univali.api\bin\Debug\net7.0\Microsoft.AspNetCore.JsonPatch.dll
+C:\Users\7628889\Documents\GitHub\AulaAllogSingleton\src\univali.api\bin\Debug\net7.0\Microsoft.AspNetCore.Mvc.NewtonsoftJson.dll
+C:\Users\7628889\Documents\GitHub\AulaAllogSingleton\src\univali.api\bin\Debug\net7.0\Newtonsoft.Json.dll
+C:\Users\7628889\Documents\GitHub\AulaAllogSingleton\src\univali.api\bin\Debug\net7.0\Newtonsoft.Json.Bson.dll
