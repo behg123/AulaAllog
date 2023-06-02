@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Univali.Api.Entities;
 using Univali.Api.Models;
 
@@ -42,6 +43,13 @@ public class CustomersController : ControllerBase
     [HttpPost]
     public ActionResult<CustomerDto> CreateCustomer(CustomerForCreationDto customerForCreationDto)
     {
+        if(!ModelState.IsValid){
+            Response.ContentType = "application/problem+json";
+            var problemDetailsFactory = HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>(); 
+            var validationProblemDetails = problemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState);
+            validationProblemDetails.Status = StatusCodes.Status422UnprocessableEntity;
+            return UnprocessableEntity(validationProblemDetails);
+        } 
         var customerEntity = new Customer
         {
             Id = Data.instanceAcess().Customers.Max(c => c.Id) + 1,
@@ -83,18 +91,20 @@ public class CustomersController : ControllerBase
 
 
 
-    [HttpPatch("id")]
-    public ActionResult PartiallyUpdateCustomer([FromBody] JsonPatchDocument<CustomerForPatchDto> patchDocument, [FromRoute] int id)
+    [HttpPatch("{id}")]
+    public ActionResult PartiallyUpdateCustomer(
+        [FromBody] JsonPatchDocument<CustomerForPatchDto> patchDocument,
+        [FromRoute] int id)
     {
-        var customerFromDatabase = FindCustomerById(id);
+        var customerFromDatabase = Data.instanceAcess().Customers
+            .FirstOrDefault(customer => customer.Id == id);
 
         if (customerFromDatabase == null) return NotFound();
 
-        var customerToPatch = new CustomerForPatchDto()
+        var customerToPatch = new CustomerForPatchDto
         {
-                Name = customerFromDatabase.Name,
-                Cpf = customerFromDatabase.Cpf,
-
+            Name = customerFromDatabase.Name,
+            Cpf = customerFromDatabase.Cpf
         };
 
         patchDocument.ApplyTo(customerToPatch);
@@ -103,6 +113,7 @@ public class CustomersController : ControllerBase
         customerFromDatabase.Cpf = customerToPatch.Cpf;
 
         return NoContent();
+
     }
 
     private Customer FindCustomerById(int id)
