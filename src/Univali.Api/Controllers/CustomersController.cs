@@ -153,6 +153,24 @@ public class CustomersController : ControllerBase
         return newCustomer;
     }
 
+    [HttpGet("with-address")]
+    public ActionResult<IEnumerable<CustomerWithAddressesDto>> GetAllCustomersWithAddresses(int id)
+    {
+        var customerFromDatabase = Data.instanceAcess().Customers;
+
+        var customerToReturn = customerFromDatabase.Select(customer => new CustomerWithAddressesDto{
+            Id = customer.Id,
+            Name = customer.Name,
+            Cpf = customer.Cpf,
+            Addresses = customer.Addresses.Select(address => new AddressDto{
+                Id = address.Id,
+                Street = address.Street,
+                City = address.City
+            }).ToList()
+        });
+
+        return Ok(customerToReturn);
+    }
 
 
 }

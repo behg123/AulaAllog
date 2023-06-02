@@ -16,12 +16,31 @@ namespace Univali.Api
                 new Customer{
                     Id = 1,
                     Name = "Joao",
-                    Cpf = "128975641"
+                    Cpf = "128975641",
+                    Addresses = new List<Address>(){
+                        new Address(){
+                            Id = 1,
+                            Street = "Verão",
+                            City = "Elvira"
+                        },
+                        new Address(){
+                            Id = 2,
+                            Street = "Joao Sacavem",
+                            City = "Navegantes"
+                        }
+                    }
                 },
                 new Customer{
                     Id = 2,
                     Name = "Renan",
-                    Cpf = "751478625"
+                    Cpf = "751478625",
+                    Addresses = new List<Address>(){
+                        new Address(){
+                            Id = 3,
+                            Street = "Mario Dias",
+                            City = "Blumenau"
+                        }
+                    }
                 }
             };
 
