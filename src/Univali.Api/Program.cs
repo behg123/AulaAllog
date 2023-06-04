@@ -6,13 +6,13 @@ builder.WebHost.ConfigureKestrel(options => {
     options.ListenLocalhost(5000);
 });
 
-// Add services to the container.
-builder.Services.AddControllers(options =>{
-    options.InputFormatters.Insert(0, MyJPIF.GetJsonPatchInputFormatter());
 
-}).ConfigureApiBehaviorOptions(options => 
-    options.SuppressModelStateInvalidFilter = true
-);
+// Add services to the container.
+
+builder.Services.AddControllers(options => {
+    options.InputFormatters.Insert(0, MyJPIF.GetJsonPatchInputFormatter());
+}).ConfigureApiBehaviorOptions(options => options.SuppressModelStateInvalidFilter = true);
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -24,7 +24,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-}   
+}
 
 app.UseHttpsRedirection();
 
