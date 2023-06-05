@@ -125,7 +125,7 @@ public class CustomersController : ControllerBase
         if (customerFromDatabase == null) return NotFound();
         var customerToReturn = ConvertToCustomerWithAddressDto(customerFromDatabase);
         return Ok(customerToReturn);
-    }
+    }                                                                                                                                                                                                                                                                                                            
 
     [HttpGet("cpf/{cpf}")]
     public ActionResult<CustomerDto> GetCustomerByCpf(string cpf)
