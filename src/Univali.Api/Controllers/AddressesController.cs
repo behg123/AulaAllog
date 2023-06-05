@@ -48,23 +48,7 @@ public class AdressControler : ControllerBase
     // | | |  __/ (_| | (_| |
     // |_|  \___|\__,_|\__,_|
     //////////////////////////////////////////////////////////////////////////////
-    [HttpGet]
-    public ActionResult<IEnumerable<AddressDto>> GetAllAdressesFromCustomer(int customerId)
-    {
-        var customerFromDatabase = FindCustomerById(customerId);
-        if (customerFromDatabase == null) return NotFound();
-        var addressToReturn = new List<AddressDto>();
-        foreach (var address in customerFromDatabase.Addresses)
-        {
-            addressToReturn.Add(new AddressDto
-            {
-                Id = address.Id,
-                City = address.City,
-                Street = address.Street
-            });
-        }
-        return Ok(addressToReturn);
-    }
+
 
 
     [HttpGet("{addressId}", Name = "GetAddressFromCustomer")]
@@ -139,7 +123,7 @@ public class AdressControler : ControllerBase
     private Address FindAddressById(int customerId, int addressId)
     {
         var customerEntity = Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == customerId)!;
-        if (customerEntity == null) return null;
+        if (customerEntity == null) return null!;
         return customerEntity.Addresses.FirstOrDefault(a => a.Id == addressId)!;
     }
 

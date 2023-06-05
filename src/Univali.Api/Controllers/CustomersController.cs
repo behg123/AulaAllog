@@ -68,24 +68,25 @@ public class CustomersController : ControllerBase
 
         IEnumerable<Address> allAddresses = Data.instanceAcess().Customers.SelectMany(customer => customer.Addresses);
 
+        int iterator = 1;
         foreach (var addressDto in customerWithAddressesDto.Addresses)
         {
             var address = new Address
             {
-                Id = allAddresses.Max(c => c.Id) + 1,
+                Id = allAddresses.Max(c => c.Id) + iterator,
                 Street = addressDto.Street,
                 City = addressDto.City
             };
-
             customerEntity.Addresses.Add(address);
+            iterator = iterator+1;
         }
 
 
         Data.instanceAcess().Customers.Add(customerEntity);
-        var customerToReturn = ConvertToCustomerDto(customerEntity);
+        var customerToReturn = ConvertToCustomerWithAddressDto(customerEntity);
         return CreatedAtRoute
         (
-            "GetCustomerById",
+            "GetCustomerWithAddressesById",
             new { id = customerToReturn.Id },
             customerToReturn
         );
@@ -117,6 +118,15 @@ public class CustomersController : ControllerBase
         return Ok(customerToReturn);
     }
 
+    [HttpGet("with-address/{id}", Name = "GetCustomerWithAddressesById")]
+    public ActionResult<CustomerWithAddressesDto> GetCustomerWithAddressesById(int id)
+    {
+        var customerFromDatabase = FindCustomerById(id);
+        if (customerFromDatabase == null) return NotFound();
+        var customerToReturn = ConvertToCustomerWithAddressDto(customerFromDatabase);
+        return Ok(customerToReturn);
+    }
+
     [HttpGet("cpf/{cpf}")]
     public ActionResult<CustomerDto> GetCustomerByCpf(string cpf)
     {
@@ -126,7 +136,7 @@ public class CustomersController : ControllerBase
         return Ok(customerToReturn);
     }
 
-        [HttpGet("with-address")]
+    [HttpGet("with-address")]
     public ActionResult<IEnumerable<CustomerWithAddressesDto>> GetAllCustomersWithAddresses(int id)
     {
         var customerFromDatabase = Data.instanceAcess().Customers;
@@ -147,6 +157,23 @@ public class CustomersController : ControllerBase
         return Ok(customerToReturn);
     }
 
+    [HttpGet(Name = "GetAllAdressesFromCustomer")]
+    public ActionResult<IEnumerable<AddressDto>> GetAllAdressesFromCustomer(int customerId)
+    {
+        var customerFromDatabase = FindCustomerById(customerId);
+        if (customerFromDatabase == null) return NotFound();
+        var addressToReturn = new List<AddressDto>();
+        foreach (var address in customerFromDatabase.Addresses)
+        {
+            addressToReturn.Add(new AddressDto
+            {
+                Id = address.Id,
+                City = address.City,
+                Street = address.Street
+            });
+        }
+        return Ok(addressToReturn);
+    }
 
 
 
@@ -255,7 +282,6 @@ public class CustomersController : ControllerBase
         return Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == id)!;
     }
 
-
     private Customer FindCustomerByCpf(String cpf)
     {
         return Data.instanceAcess().Customers.FirstOrDefault(c => c.Cpf == cpf)!;
@@ -288,6 +314,24 @@ public class CustomersController : ControllerBase
     }
 
 
+
+    private CustomerWithAddressesDto ConvertToCustomerWithAddressDto(Customer customerWithAddressesDto)
+    {
+        var newCustomer = new CustomerWithAddressesDto
+        {
+            Id = customerWithAddressesDto.Id,
+            Name = customerWithAddressesDto.Name,
+            Cpf = customerWithAddressesDto.Cpf,
+            Addresses = customerWithAddressesDto.Addresses.Select(address => new AddressDto
+            {
+                Id = address.Id,
+                Street = address.Street,
+                City = address.City
+            }).ToList()
+        };
+
+        return newCustomer;
+    }
 
 
 }
