@@ -1,13 +1,23 @@
 using Microsoft.AspNetCore.Mvc;
 using Univali.Api.Models;
 using Univali.Api.Entities;
+using AutoMapper;
 
 namespace Univali.Api.Controllers;
 
 [ApiController]
 [Route("api/customers/{customerId}/addresses")]
-public class AdressControler : ControllerBase
+public class AddressesController : ControllerBase
 {
+    private readonly Data _data;
+    private readonly IMapper _mapper;
+
+    public AddressesController(Data data, IMapper mapper)
+    {
+        _data = data ?? throw new ArgumentNullException(nameof(data));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+
+    }
 
     //////////////////////////////////////////////////////////////////////////////
     //   ___ _ __ ___  __ _| |_ ___ 
@@ -20,7 +30,7 @@ public class AdressControler : ControllerBase
     {
         var customerFromDatabase = FindCustomerById(customerId);
         if (customerFromDatabase == null) return NotFound();
-        IEnumerable<Address> allAddresses = Data.instanceAcess().Customers.SelectMany(customer => customer.Addresses);
+        IEnumerable<Address> allAddresses = _data.Customers.SelectMany(customer => customer.Addresses);
 
         var addressEntity = new Address
         {
@@ -31,7 +41,7 @@ public class AdressControler : ControllerBase
 
         customerFromDatabase.Addresses.Add(addressEntity);
 
-        var addresstoReturn = ConvertToAddressDto(addressEntity);
+        var addresstoReturn = _mapper.Map<AddressDto>(addressEntity);
 
         return CreatedAtRoute
         (
@@ -55,10 +65,30 @@ public class AdressControler : ControllerBase
 
         if (addressFromCustomer == null) return NotFound();
 
-        AddressDto addressToReturn = ConvertToAddressDto(addressFromCustomer);
+        var addresstoReturn = _mapper.Map<AddressDto>(addressFromCustomer);
 
+        return Ok(addresstoReturn);
+    }
+
+    [HttpGet(Name = "GetAllAdressesFromCustomer")]
+    public ActionResult<IEnumerable<AddressDto>> GetAllAdressesFromCustomer(int customerId)
+    {
+        var customerFromDatabase = FindCustomerById(customerId);
+        if (customerFromDatabase == null) return NotFound();
+        var addressToReturn = new List<AddressDto>();
+        foreach (var address in customerFromDatabase.Addresses)
+        {
+            addressToReturn.Add(new AddressDto
+            {
+                Id = address.Id,
+                City = address.City,
+                Street = address.Street
+            });
+        }
+        
         return Ok(addressToReturn);
     }
+
 
     //////////////////////////////////////////////////////////////////////////////
     //  _   _ _ __   __| | __ _| |_ ___ 
@@ -68,24 +98,17 @@ public class AdressControler : ControllerBase
     //       |_|                        
     //////////////////////////////////////////////////////////////////////////////
     [HttpPut("{addressId}")]
-    public ActionResult<AddressDto> UpdateAddressFromCustomer(int customerId, int addressId, AddressForUpdateDto AddressForUpdateDto)
+    public ActionResult UpdateAddressFromCustomer(int customerId, int addressId, AddressForUpdateDto addressForUpdateDto)
     {
+        var addressFromCustomer = FindAddressById(customerId, addressId);
+        if (addressFromCustomer == null) return NotFound();
 
-        var address = FindAddressById(customerId, addressId);
-        if (address == null) return NotFound();
+        _mapper.Map(addressForUpdateDto, addressFromCustomer);
 
-        address.Street = AddressForUpdateDto.Street;
-        address.City = AddressForUpdateDto.City;
-
-        var addressToReturn = new AddressDto
-        {
-            Id = address.Id,
-            Street = address.Street,
-            City = address.City
-        };
-
-        return Ok(addressToReturn);
+        return NoContent();
     }
+
+
 
     [HttpDelete("{addressId}")]
     public ActionResult DeleteAddressFromCustomer(int customerId, int addressId)
@@ -111,41 +134,19 @@ public class AdressControler : ControllerBase
     //////////////////////////////////////////////////////////////////////////////      
     private Customer FindCustomerById(int id)
     {
-        return Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == id)!;
+        return _data.Customers.FirstOrDefault(c => c.Id == id)!;
     }
 
     private Address FindAddressById(int customerId, int addressId)
     {
-        var customerEntity = Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == customerId)!;
+        var customerEntity = _data.Customers.FirstOrDefault(c => c.Id == customerId)!;
         if (customerEntity == null) return null!;
         return customerEntity.Addresses.FirstOrDefault(a => a.Id == addressId)!;
     }
 
     private Customer FindCustomerByCpf(String cpf)
     {
-        return Data.instanceAcess().Customers.FirstOrDefault(c => c.Cpf == cpf)!;
+        return _data.Customers.FirstOrDefault(c => c.Cpf == cpf)!;
     }
 
-    private AddressDto ConvertToAddressDto(Address address)
-    {
-        var addressDto = new AddressDto
-        {
-            Id = address.Id,
-            Street = address.Street,
-            City = address.City
-        };
-        return addressDto;
-    }
-
-    private Address ConvertToAddress(AddressDto addressDto)
-    {
-        var adressConverted = new Address
-        {
-            Id = addressDto.Id,
-            Street = addressDto.Street,
-            City = addressDto.City
-        };
-
-        return adressConverted;
-    }
 }

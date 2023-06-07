@@ -1,61 +1,52 @@
-using Univali.Api.Controllers;
 using Univali.Api.Entities;
 
 namespace Univali.Api
 {
-    //Classes sem parametro
+    // Classes sem parâmetro, não possui tipos como parâmetro
     public class Data
     {
-        public List<Customer> Customers {get; set;}
-        private static Data instance = new Data();
+        public List<Customer> Customers { get; set; }
 
-        private Data()
+        public Data()
         {
             Customers = new List<Customer>
             {
-                new Customer{
+                new Customer {
                     Id = 1,
-                    Name = "Joao",
-                    Cpf = "128975641",
-                    Addresses = new List<Address>(){
-                        new Address(){
+                    Name = "Linus Torvalds",
+                    Cpf = "73473943096",
+                    Addresses = new List<Address>()
+                   {
+                       new Address
+                       {
                             Id = 1,
-                            Street = "Verão",
+                            Street = "Verão do Cometa",
                             City = "Elvira"
-                        },
-                        new Address(){
-                            Id = 2,
-                            Street = "Joao Sacavem",
-                            City = "Navegantes"
-                        }
+                       },
+                       new Address
+                       {
+                           Id = 2,
+                           Street = "Borboletas Psicodélicas",
+                           City = "Perobia"
+                       }
                     }
                 },
-                new Customer{
-                    Id = 2,
-                    Name = "Renan",
-                    Cpf = "751478625",
-                    Addresses = new List<Address>(){
-                        new Address(){
-                            Id = 3,
-                            Street = "Mario Dias",
-                            City = "Blumenau"
+
+                new Customer {
+                        Id = 2,
+                        Name = "Bill Gates",
+                        Cpf = "95395994076",
+                        Addresses = new List<Address>
+                        {
+                            new Address
+                            {
+                                Id = 3,
+                                Street = "Canção Excêntrica",
+                                City = "Salandra"
+                            }
                         }
                     }
-                }
             };
-
         }
-
-        public static Data instanceAcess(){
-            if(instance == null)
-            {
-                instance = new Data();
-            } 
-            return instance;
-        }
-        
-
     }
-
-
 }
