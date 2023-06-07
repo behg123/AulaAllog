@@ -48,32 +48,13 @@ public class AdressControler : ControllerBase
     // | | |  __/ (_| | (_| |
     // |_|  \___|\__,_|\__,_|
     //////////////////////////////////////////////////////////////////////////////
-    [HttpGet]
-    public ActionResult<IEnumerable<AddressDto>> GetAllAdressesFromCustomer(int customerId)
-    {
-        var customerFromDatabase = FindCustomerById(customerId);
-        if (customerFromDatabase == null) return NotFound();
-        var addressToReturn = new List<AddressDto>();
-        foreach (var address in customerFromDatabase.Addresses)
-        {
-            addressToReturn.Add(new AddressDto
-            {
-                Id = address.Id,
-                City = address.City,
-                Street = address.Street
-            });
-        }
-        return Ok(addressToReturn);
-    }
-
-
     [HttpGet("{addressId}", Name = "GetAddressFromCustomer")]
     public ActionResult<AddressDto> GetAddressFromCustomer(int customerId, int addressId)
     {
         var addressFromCustomer = FindAddressById(customerId, addressId);
 
         if (addressFromCustomer == null) return NotFound();
- 
+
         AddressDto addressToReturn = ConvertToAddressDto(addressFromCustomer);
 
         return Ok(addressToReturn);
@@ -106,8 +87,6 @@ public class AdressControler : ControllerBase
         return Ok(addressToReturn);
     }
 
-
-
     [HttpDelete("{addressId}")]
     public ActionResult DeleteAddressFromCustomer(int customerId, int addressId)
     {
@@ -124,7 +103,6 @@ public class AdressControler : ControllerBase
         return NoContent();
     }
 
-
     //////////////////////////////////////////////////////////////////////////////              
     //  _   _| |_(_) |___ 
     // | | | | __| | / __|
@@ -139,10 +117,9 @@ public class AdressControler : ControllerBase
     private Address FindAddressById(int customerId, int addressId)
     {
         var customerEntity = Data.instanceAcess().Customers.FirstOrDefault(c => c.Id == customerId)!;
-        if (customerEntity == null) return null;
+        if (customerEntity == null) return null!;
         return customerEntity.Addresses.FirstOrDefault(a => a.Id == addressId)!;
     }
-
 
     private Customer FindCustomerByCpf(String cpf)
     {
@@ -157,10 +134,8 @@ public class AdressControler : ControllerBase
             Street = address.Street,
             City = address.City
         };
-
         return addressDto;
     }
-
 
     private Address ConvertToAddress(AddressDto addressDto)
     {
@@ -173,10 +148,4 @@ public class AdressControler : ControllerBase
 
         return adressConverted;
     }
-
-
-
-
-
-
 }
