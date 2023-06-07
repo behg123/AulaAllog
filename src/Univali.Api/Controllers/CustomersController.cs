@@ -2,6 +2,8 @@ using AutoMapper;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.Options;
 using Univali.Api.Entities;
 using Univali.Api.Models;
 
@@ -9,7 +11,7 @@ namespace Univali.Api.Controllers;
 
 [ApiController]
 [Route("Api/customers")]
-public class CustomersController : ControllerBase
+public class CustomersController : MainController
 {
 
     private readonly Data _data;
@@ -29,14 +31,14 @@ public class CustomersController : ControllerBase
     [HttpPost]
     public ActionResult<CustomerDto> CreateCustomer(CustomerForCreationDto customerForCreationDto)
     {
-        if (!ModelState.IsValid)
-        {
-            Response.ContentType = "application/problem+json";
-            var problemDetailsFactory = HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
-            var validationProblemDetails = problemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState);
-            validationProblemDetails.Status = StatusCodes.Status422UnprocessableEntity;
-            return UnprocessableEntity(validationProblemDetails);
-        }
+        // if (!ModelState.IsValid)
+        // {
+        //     Response.ContentType = "application/problem+json";
+        //     var problemDetailsFactory = HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
+        //     var validationProblemDetails = problemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState);
+        //     validationProblemDetails.Status = StatusCodes.Status422UnprocessableEntity;
+        //     return UnprocessableEntity(validationProblemDetails);
+        // }
 
         var customerEntity = new Customer
         {
@@ -58,16 +60,6 @@ public class CustomersController : ControllerBase
     [HttpPost("with-addresses")]
     public ActionResult<CustomerDto> CreateCustomerWithAddresses(CustomerWithAddressesDto customerWithAddressesDto)
     {
-        if (!ModelState.IsValid)
-        {
-            Response.ContentType = "application/problem+json";
-            var problemDetailsFactory = HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
-            var validationProblemDetails = problemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState);
-            validationProblemDetails.Status = StatusCodes.Status422UnprocessableEntity;
-            return UnprocessableEntity(validationProblemDetails);
-        }
-
-
         var customerEntity = new Customer
         {
             Id = _data.Customers.Max(c => c.Id) + 1,
@@ -227,7 +219,12 @@ public class CustomersController : ControllerBase
             Cpf = customerFromDatabase.Cpf
         };
 
-        patchDocument.ApplyTo(customerToPatch);
+        patchDocument.ApplyTo(customerToPatch, ModelState);
+
+        if(!TryValidateModel(customerToPatch))
+        {
+            return ValidationProblem(ModelState);
+        }
 
         _mapper.Map(customerToPatch, customerFromDatabase);
 
