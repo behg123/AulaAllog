@@ -55,7 +55,7 @@ public class CustomersController : ControllerBase
         );
     }
 
-    [HttpPost("with-addresseseses")]
+    [HttpPost("with-addresses")]
     public ActionResult<CustomerDto> CreateCustomerWithAddresses(CustomerWithAddressesDto customerWithAddressesDto)
     {
         if (!ModelState.IsValid)
@@ -184,7 +184,7 @@ public class CustomersController : ControllerBase
     }
 
 
-    [HttpPut("with-addresseses/{customerId}")]
+    [HttpPut("with-addresses/{customerId}")]
     public ActionResult UpdateCustomerWithAddresses(int customerId,
        CustomerWithAddressesForUpdateDto customerWithAddressesForUpdateDto)
     {
@@ -193,6 +193,8 @@ public class CustomersController : ControllerBase
         if (customerFromDatabase == null) return NotFound();
 
         _mapper.Map(customerWithAddressesForUpdateDto, customerFromDatabase);
+
+
         var maxAddressId = _data.Customers.SelectMany(c => c.Addresses).Max(c => c.Id);
         customerFromDatabase.Addresses = customerWithAddressesForUpdateDto
                                         .Addresses.Select(
