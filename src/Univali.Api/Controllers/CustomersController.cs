@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
+using Univali.Api.DbContexts;
 using Univali.Api.Entities;
 using Univali.Api.Models;
 
@@ -16,12 +17,16 @@ public class CustomersController : MainController
 
     private readonly Data _data;
     private readonly IMapper _mapper;
+    private readonly CustomerContext _context;
 
-    public CustomersController(Data data, IMapper mapper)
+
+    public CustomersController(Data data, IMapper mapper, CustomerContext context)
     {
         _data = data ?? throw new ArgumentNullException(nameof(data));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _context = context ?? throw new ArgumentNullException(nameof(context));
     }
+
     ///////////////////////////////////////
     //   ___ _ __ ___  __ _| |_ ___ 
     //  / __| '__/ _ \/ _` | __/ _ \
@@ -40,15 +45,12 @@ public class CustomersController : MainController
         //     return UnprocessableEntity(validationProblemDetails);
         // }
 
-        var customerEntity = new Customer
-        {
-            Id = _data.Customers.Max(c => c.Id) + 1,
-            Name = customerForCreationDto.Name,
-            Cpf = customerForCreationDto.Cpf
-        };
-        _data.Customers.Add(customerEntity);
+        var customerEntity = _mapper.Map<Customer>(customerForCreationDto);
+        _context.Customers.Add(customerEntity);
+        _context.SaveChanges();
 
         var customerToReturn = _mapper.Map<CustomerDto>(customerEntity);
+
         return CreatedAtRoute
         (
             "GetCustomerById",
@@ -104,8 +106,8 @@ public class CustomersController : MainController
     [HttpGet]
     public ActionResult<IEnumerable<CustomerDto>> GetCustomers()
     {
-        var customerFromDatabase = _data.Customers;
-        var customerDtos = customerFromDatabase.Select(customer => _mapper.Map<CustomerDto>(customer));
+        var customerFromDatabase = _context.Customers.OrderBy(c => c.Name).ToList();
+        var customerDtos = _mapper.Map<IEnumerable<CustomerDto>>(customerFromDatabase);
         return Ok(customerDtos);
     }
 
@@ -255,7 +257,7 @@ public class CustomersController : MainController
     ///////////////////////////////////////                 
     private Customer FindCustomerById(int id)
     {
-        return _data.Customers.FirstOrDefault(c => c.Id == id)!;
+        return _context.Customers.FirstOrDefault(c => c.Id == id)!;
     }
 
     private Customer FindCustomerByCpf(String cpf)

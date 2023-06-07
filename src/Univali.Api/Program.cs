@@ -1,22 +1,32 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Univali.Api;
 using Univali.Api.Configuration;
+using Univali.Api.DbContexts;
+using Univali.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.ConfigureKestrel(options => {
-   options.ListenLocalhost(5000);
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenLocalhost(5000);
 });
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 builder.Services.AddSingleton<Data>();
 
+builder.Services.AddDbContext<CustomerContext>(options =>
+{
+    options.UseNpgsql("Host=localhost;Database=Univali;Username=postgres;Password=123456");
+});
 
-builder.Services.AddControllers(options =>{
+
+builder.Services.AddControllers(options =>
+{
     options.InputFormatters.Insert(0, MyJPIF.GetJsonPatchInputFormatter());
-})
-.ConfigureApiBehaviorOptions(setupAction =>
+}).ConfigureApiBehaviorOptions(setupAction =>
        {
            setupAction.InvalidModelStateResponseFactory = context =>
            {
@@ -27,7 +37,7 @@ builder.Services.AddControllers(options =>{
 
                // Cria um objeto de detalhes de problema de validação
                var validationProblemDetails = problemDetailsFactory
-                   .CreateValidationProblemDetails( 
+                   .CreateValidationProblemDetails(
                        context.HttpContext,
                        context.ModelState);
 
@@ -59,6 +69,10 @@ builder.Services.AddControllers(options =>{
 
 
 
+
+
+
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -75,5 +89,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+await app.ResetDatabaseAsync();
 
 app.Run();
