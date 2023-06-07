@@ -14,10 +14,13 @@ public class CustomerProfile : Profile
         */
         CreateMap<Entities.Customer, Models.CustomerDto>();
         CreateMap<Entities.Address, Models.AddressDto>(); 
+
         CreateMap<Models.CustomerForUpdateDto, Entities.Customer>();
         CreateMap<Models.CustomerWithAddressesForUpdateDto, Entities.Customer>();
         CreateMap<Models.CustomerForPatchDto, Entities.Customer>();
         CreateMap<Models.AddressForUpdateDto, Entities.Address>();
+        CreateMap<Models.AddressDto, Entities.Address>(); 
+
         
     }
 }
