@@ -19,7 +19,7 @@ builder.Services.AddSingleton<Data>();
 
 builder.Services.AddDbContext<CustomerContext>(options =>
 {
-    options.UseNpgsql("Host=localhost;Database=Univali;Username=postgres;Password=123456");
+    options.UseNpgsql("Host=localhost;Database=Univali;Username=postgres;Password=123");
 });
 
 

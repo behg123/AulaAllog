@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Univali.Api.Models;
 using Univali.Api.Entities;
 using AutoMapper;
+using Univali.Api.DbContexts;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace Univali.Api.Controllers;
 
@@ -11,11 +14,13 @@ public class AddressesController : MainController
 {
     private readonly Data _data;
     private readonly IMapper _mapper;
+    private readonly CustomerContext _context;
 
-    public AddressesController(Data data, IMapper mapper)
+    public AddressesController(Data data, IMapper mapper, CustomerContext context)
     {
         _data = data ?? throw new ArgumentNullException(nameof(data));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+        _context = context ?? throw new ArgumentNullException(nameof(context));
 
     }
 
@@ -30,14 +35,9 @@ public class AddressesController : MainController
     {
         var customerFromDatabase = FindCustomerById(customerId);
         if (customerFromDatabase == null) return NotFound();
-        IEnumerable<Address> allAddresses = _data.Customers.SelectMany(customer => customer.Addresses);
-
-        var addressEntity = new Address
-        {
-            Id = allAddresses.Max(c => c.Id) + 1,
-            Street = addressForCreationDto.Street,
-            City = addressForCreationDto.City
-        };
+        IEnumerable<Address> allAddresses = _context.Customers.SelectMany(customer => customer.Addresses);
+        
+        var addressEntity = _mapper.Map<Address>(addressForCreationDto);
 
         customerFromDatabase.Addresses.Add(addressEntity);
 
@@ -70,24 +70,20 @@ public class AddressesController : MainController
         return Ok(addresstoReturn);
     }
 
-    [HttpGet(Name = "GetAllAdressesFromCustomer")]
-    public ActionResult<IEnumerable<AddressDto>> GetAllAdressesFromCustomer(int customerId)
+    [HttpGet(Name = "GetAllAddressesFromCustomer")]
+    public ActionResult<IEnumerable<AddressDto>> GetAllAddressesFromCustomer(int customerId)
     {
-        var customerFromDatabase = FindCustomerById(customerId);
+        var customerFromDatabase = _context.Customers
+            .Include(c => c.Addresses)
+            .FirstOrDefault(c => c.Id == customerId);
+
         if (customerFromDatabase == null) return NotFound();
-        var addressToReturn = new List<AddressDto>();
-        foreach (var address in customerFromDatabase.Addresses)
-        {
-            addressToReturn.Add(new AddressDto
-            {
-                Id = address.Id,
-                City = address.City,
-                Street = address.Street
-            });
-        }
-        
+
+        var addressToReturn = _mapper.Map<List<AddressDto>>(customerFromDatabase.Addresses);
+
         return Ok(addressToReturn);
     }
+
 
 
     //////////////////////////////////////////////////////////////////////////////
@@ -134,19 +130,19 @@ public class AddressesController : MainController
     //////////////////////////////////////////////////////////////////////////////      
     private Customer FindCustomerById(int id)
     {
-        return _data.Customers.FirstOrDefault(c => c.Id == id)!;
+        return _context.Customers.FirstOrDefault(c => c.Id == id)!;
     }
 
     private Address FindAddressById(int customerId, int addressId)
     {
-        var customerEntity = _data.Customers.FirstOrDefault(c => c.Id == customerId)!;
+        var customerEntity = _context.Customers.FirstOrDefault(c => c.Id == customerId)!;
         if (customerEntity == null) return null!;
         return customerEntity.Addresses.FirstOrDefault(a => a.Id == addressId)!;
     }
 
     private Customer FindCustomerByCpf(String cpf)
     {
-        return _data.Customers.FirstOrDefault(c => c.Cpf == cpf)!;
+        return _context.Customers.FirstOrDefault(c => c.Cpf == cpf)!;
     }
 
 }

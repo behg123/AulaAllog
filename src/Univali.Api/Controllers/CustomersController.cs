@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 using Univali.Api.DbContexts;
 using Univali.Api.Entities;
 using Univali.Api.Models;
@@ -62,29 +63,17 @@ public class CustomersController : MainController
     [HttpPost("with-addresses")]
     public ActionResult<CustomerDto> CreateCustomerWithAddresses(CustomerWithAddressesDto customerWithAddressesDto)
     {
-        var customerEntity = new Customer
-        {
-            Id = _data.Customers.Max(c => c.Id) + 1,
-            Name = customerWithAddressesDto.Name,
-            Cpf = customerWithAddressesDto.Cpf,
-        };
+        var customerEntity = _mapper.Map<Customer>(customerWithAddressesDto);
 
-        IEnumerable<Address> allAddresses = _data.Customers.SelectMany(customer => customer.Addresses);
+        IEnumerable<Address> allAddresses = _context.Customers.SelectMany(customer => customer.Addresses);
 
-        int iterator = 1;
         foreach (var addressDto in customerWithAddressesDto.Addresses)
         {
-            var address = new Address
-            {
-                Id = allAddresses.Max(c => c.Id) + iterator,
-                Street = addressDto.Street,
-                City = addressDto.City
-            };
+            var address = _mapper.Map<Address>(addressDto);
             customerEntity.Addresses.Add(address);
-            iterator = iterator + 1;
         }
 
-        _data.Customers.Add(customerEntity);
+        _context.Customers.Add(customerEntity);
         var customerToReturn = _mapper.Map<CustomerDto>(customerEntity);
         return CreatedAtRoute
         (
@@ -139,25 +128,21 @@ public class CustomersController : MainController
     }
 
     [HttpGet("with-addresses")]
-    public ActionResult<IEnumerable<CustomerWithAddressesDto>> GetAllCustomersWithAddresses(int id)
+    public ActionResult<IEnumerable<CustomerWithAddressesDto>> GetCustomersWithAddresses()
     {
-        var customerFromDatabase = _data.Customers;
+        // Include faz parte do pacote Microsoft.EntityFrameworkCore, precisa importar
+        // using Microsoft.EntityFrameworkCore;
+        var customersFromDatabase = _context.Customers.Include(c => c.Addresses).ToList();
 
-        var customerToReturn = customerFromDatabase.Select(customer => new CustomerWithAddressesDto
-        {
-            Id = customer.Id,
-            Name = customer.Name,
-            Cpf = customer.Cpf,
-            Addresses = customer.Addresses.Select(address => new AddressDto
-            {
-                Id = address.Id,
-                Street = address.Street,
-                City = address.City
-            }).ToList()
-        });
+        // Mapper faz o mapeamento do customer e do address
+        // Configure o profile
+        // CreateMap<Entities.Customer, Models.CustomerWithAddressesDto>();
+        // CreateMap<Entities.Address, Models.AddressDto>();
+        var customersToReturn = _mapper.Map<IEnumerable<CustomerWithAddressesDto>>(customersFromDatabase);
 
-        return Ok(customerToReturn);
+        return Ok(customersToReturn);
     }
+
     ///////////////////////////////////////
     //  _   _ _ __   __| | __ _| |_ ___ 
     // | | | | '_ \ / _` |/ _` | __/ _ \
@@ -179,27 +164,17 @@ public class CustomersController : MainController
 
 
     [HttpPut("with-addresses/{customerId}")]
-    public ActionResult UpdateCustomerWithAddresses(int customerId,
-       CustomerWithAddressesForUpdateDto customerWithAddressesForUpdateDto)
+    public ActionResult UpdateCustomerWithAddresses(int customerId, CustomerWithAddressesForUpdateDto customerWithAddressesForUpdateDto)
     {
         if (customerId != customerWithAddressesForUpdateDto.Id) return BadRequest();
-        var customerFromDatabase = _data.Customers.FirstOrDefault(c => c.Id == customerId);
+        var customerFromDatabase = _context.Customers.FirstOrDefault(c => c.Id == customerId);
         if (customerFromDatabase == null) return NotFound();
 
         _mapper.Map(customerWithAddressesForUpdateDto, customerFromDatabase);
 
-
-        var maxAddressId = _data.Customers.SelectMany(c => c.Addresses).Max(c => c.Id);
-        customerFromDatabase.Addresses = customerWithAddressesForUpdateDto
-                                        .Addresses.Select(
-                                            address =>
-                                            new Address()
-                                            {
-                                                Id = ++maxAddressId,
-                                                City = address.City,
-                                                Street = address.Street
-                                            }
-                                        ).ToList();
+        customerFromDatabase.Addresses = _mapper.Map<List<Address>>(customerWithAddressesForUpdateDto.Addresses);
+        
+        _context.SaveChanges();
 
         return NoContent();
     }
@@ -210,20 +185,16 @@ public class CustomersController : MainController
         [FromBody] JsonPatchDocument<CustomerForPatchDto> patchDocument,
         [FromRoute] int id)
     {
-        var customerFromDatabase = _data.Customers
+        var customerFromDatabase = _context.Customers
             .FirstOrDefault(customer => customer.Id == id);
 
         if (customerFromDatabase == null) return NotFound();
 
-        var customerToPatch = new CustomerForPatchDto
-        {
-            Name = customerFromDatabase.Name,
-            Cpf = customerFromDatabase.Cpf
-        };
+        var customerToPatch = _mapper.Map<CustomerForPatchDto>(customerFromDatabase);
 
         patchDocument.ApplyTo(customerToPatch, ModelState);
 
-        if(!TryValidateModel(customerToPatch))
+        if (!TryValidateModel(customerToPatch))
         {
             return ValidationProblem(ModelState);
         }
@@ -244,7 +215,7 @@ public class CustomersController : MainController
     {
         var customerFromDatabase = FindCustomerById(id);
         if (customerFromDatabase == null) return NotFound();
-        _data.Customers.Remove(customerFromDatabase);
+        _context.Customers.Remove(customerFromDatabase);
         return NoContent();
     }
 
@@ -262,7 +233,7 @@ public class CustomersController : MainController
 
     private Customer FindCustomerByCpf(String cpf)
     {
-        return _data.Customers.FirstOrDefault(c => c.Cpf == cpf)!;
+        return _context.Customers.FirstOrDefault(c => c.Cpf == cpf)!;
     }
 
 
