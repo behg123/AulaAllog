@@ -5,6 +5,7 @@ namespace Univali.Api.DbContexts;
 
 //dotnet ef migrations add SeedingData
 
+
 public class CustomerContext: DbContext{
     public DbSet<Customer> Customers {get; set;} = null!;
     public DbSet<Address> Addresses { get; set; } = null!;

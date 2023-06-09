@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Univali.Api.DbContexts;
 using Univali.Api.Entities;
 using Univali.Api.Models;
+using Univali.Api.Repositores;
 
 namespace Univali.Api.Controllers;
 
@@ -19,13 +20,15 @@ public class CustomersController : MainController
     private readonly Data _data;
     private readonly IMapper _mapper;
     private readonly CustomerContext _context;
+    private readonly ICustomerRepository _customerRepository;
 
-
-    public CustomersController(Data data, IMapper mapper, CustomerContext context)
+    public CustomersController(Data data, IMapper mapper, CustomerContext context, ICustomerRepository customerRepository)
     {
         _data = data ?? throw new ArgumentNullException(nameof(data));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _context = context ?? throw new ArgumentNullException(nameof(context));
+        _customerRepository = customerRepository ?? throw new ArgumentNullException(nameof(customerRepository));
+        
     }
 
     ///////////////////////////////////////
@@ -52,6 +55,7 @@ public class CustomersController : MainController
 
         var customerToReturn = _mapper.Map<CustomerDto>(customerEntity);
 
+
         return CreatedAtRoute
         (
             "GetCustomerById",
@@ -65,8 +69,6 @@ public class CustomersController : MainController
     {
         var customerEntity = _mapper.Map<Customer>(customerWithAddressesDto);
 
-        IEnumerable<Address> allAddresses = _context.Customers.SelectMany(customer => customer.Addresses);
-
         foreach (var addressDto in customerWithAddressesDto.Addresses)
         {
             var address = _mapper.Map<Address>(addressDto);
@@ -75,6 +77,9 @@ public class CustomersController : MainController
 
         _context.Customers.Add(customerEntity);
         var customerToReturn = _mapper.Map<CustomerDto>(customerEntity);
+
+        _context.SaveChanges();
+
         return CreatedAtRoute
         (
             "GetCustomerWithAddressesById",
@@ -95,15 +100,16 @@ public class CustomersController : MainController
     [HttpGet]
     public ActionResult<IEnumerable<CustomerDto>> GetCustomers()
     {
-        var customerFromDatabase = _context.Customers.OrderBy(c => c.Name).ToList();
-        var customerDtos = _mapper.Map<IEnumerable<CustomerDto>>(customerFromDatabase);
+        var customerFromDatabase = _customerRepository.GetCustomers();
+        var customerDtos = _mapper.Map<IEnumerable<CustomerDto>>(customerFromDatabase);     
         return Ok(customerDtos);
+
     }
 
     [HttpGet("{id}", Name = "GetCustomerById")]
-    public ActionResult<CustomerDto> GetCustomerById(int id)
+    public ActionResult<CustomerDto> GetCustomerById(int customerId)
     {
-        var customerFromDatabase = FindCustomerById(id);
+        var customerFromDatabase = _customerRepository.GetCustomerById(customerId);
         if (customerFromDatabase == null) return NotFound();
         var customerToReturn = _mapper.Map<CustomerDto>(customerFromDatabase);
         return Ok(customerToReturn);
@@ -130,14 +136,9 @@ public class CustomersController : MainController
     [HttpGet("with-addresses")]
     public ActionResult<IEnumerable<CustomerWithAddressesDto>> GetCustomersWithAddresses()
     {
-        // Include faz parte do pacote Microsoft.EntityFrameworkCore, precisa importar
-        // using Microsoft.EntityFrameworkCore;
+
         var customersFromDatabase = _context.Customers.Include(c => c.Addresses).ToList();
 
-        // Mapper faz o mapeamento do customer e do address
-        // Configure o profile
-        // CreateMap<Entities.Customer, Models.CustomerWithAddressesDto>();
-        // CreateMap<Entities.Address, Models.AddressDto>();
         var customersToReturn = _mapper.Map<IEnumerable<CustomerWithAddressesDto>>(customersFromDatabase);
 
         return Ok(customersToReturn);
@@ -158,6 +159,7 @@ public class CustomersController : MainController
         if (customerFromDatabase == null) return NotFound();
 
         _mapper.Map(customerForUpdateDto, customerFromDatabase);
+        _context.SaveChanges();
 
         return NoContent();
     }
@@ -167,14 +169,22 @@ public class CustomersController : MainController
     public ActionResult UpdateCustomerWithAddresses(int customerId, CustomerWithAddressesForUpdateDto customerWithAddressesForUpdateDto)
     {
         if (customerId != customerWithAddressesForUpdateDto.Id) return BadRequest();
-        var customerFromDatabase = _context.Customers.FirstOrDefault(c => c.Id == customerId);
+
+        var customerFromDatabase = _context.Customers.Include(customer => customer.Addresses).FirstOrDefault(c => c.Id == customerId);
         if (customerFromDatabase == null) return NotFound();
 
         _mapper.Map(customerWithAddressesForUpdateDto, customerFromDatabase);
-
-        customerFromDatabase.Addresses = _mapper.Map<List<Address>>(customerWithAddressesForUpdateDto.Addresses);
-        
         _context.SaveChanges();
+
+        foreach (var addressDto in customerWithAddressesForUpdateDto.Addresses)
+        {
+            var addressFromDatabase = customerFromDatabase.Addresses.FirstOrDefault(address => address.Id == addressDto.Id);
+            
+            if (addressFromDatabase != null)
+            {
+                _mapper.Map(addressDto, addressFromDatabase);
+            }
+        }
 
         return NoContent();
     }
@@ -201,6 +211,8 @@ public class CustomersController : MainController
 
         _mapper.Map(customerToPatch, customerFromDatabase);
 
+        _context.SaveChanges();
+
         return NoContent();
 
     }
@@ -216,6 +228,8 @@ public class CustomersController : MainController
         var customerFromDatabase = FindCustomerById(id);
         if (customerFromDatabase == null) return NotFound();
         _context.Customers.Remove(customerFromDatabase);
+        _context.SaveChanges();
+
         return NoContent();
     }
 

@@ -35,11 +35,12 @@ public class AddressesController : MainController
     {
         var customerFromDatabase = FindCustomerById(customerId);
         if (customerFromDatabase == null) return NotFound();
-        IEnumerable<Address> allAddresses = _context.Customers.SelectMany(customer => customer.Addresses);
         
         var addressEntity = _mapper.Map<Address>(addressForCreationDto);
 
         customerFromDatabase.Addresses.Add(addressEntity);
+
+        _context.SaveChanges();
 
         var addresstoReturn = _mapper.Map<AddressDto>(addressEntity);
 
@@ -61,11 +62,20 @@ public class AddressesController : MainController
     [HttpGet("{addressId}", Name = "GetAddressFromCustomer")]
     public ActionResult<AddressDto> GetAddressFromCustomer(int customerId, int addressId)
     {
-        var addressFromCustomer = FindAddressById(customerId, addressId);
+        var customerFromDatabase = _data.Customers
+            .FirstOrDefault(customer => customer.Id == customerId);
 
-        if (addressFromCustomer == null) return NotFound();
+        if(customerFromDatabase == null) return NotFound();
 
-        var addresstoReturn = _mapper.Map<AddressDto>(addressFromCustomer);
+
+        var addressFromDatabase = customerFromDatabase.Addresses
+            .FirstOrDefault(address => address.Id == addressId);
+
+        if (addressFromDatabase == null) return NotFound();
+
+        var addresstoReturn = _mapper.Map<AddressDto>(addressFromDatabase);
+
+        _context.SaveChanges();
 
         return Ok(addresstoReturn);
     }
@@ -80,6 +90,8 @@ public class AddressesController : MainController
         if (customerFromDatabase == null) return NotFound();
 
         var addressToReturn = _mapper.Map<List<AddressDto>>(customerFromDatabase.Addresses);
+
+        _context.SaveChanges();
 
         return Ok(addressToReturn);
     }
@@ -101,6 +113,8 @@ public class AddressesController : MainController
 
         _mapper.Map(addressForUpdateDto, addressFromCustomer);
 
+        _context.SaveChanges();
+
         return NoContent();
     }
 
@@ -119,6 +133,8 @@ public class AddressesController : MainController
 
         customer.Addresses.Remove(address);
 
+        _context.SaveChanges();
+
         return NoContent();
     }
 
@@ -135,9 +151,10 @@ public class AddressesController : MainController
 
     private Address FindAddressById(int customerId, int addressId)
     {
-        var customerEntity = _context.Customers.FirstOrDefault(c => c.Id == customerId)!;
-        if (customerEntity == null) return null!;
-        return customerEntity.Addresses.FirstOrDefault(a => a.Id == addressId)!;
+        var customerFromDatabase = _data.Customers
+            .FirstOrDefault(customer => customer.Id == customerId);
+        if (customerFromDatabase == null) return null!;
+        return customerFromDatabase.Addresses.FirstOrDefault(address => address.Id == addressId);
     }
 
     private Customer FindCustomerByCpf(String cpf)
