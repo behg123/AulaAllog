@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Univali.Api.DbContexts;
 using Univali.Api.Entities;
 
@@ -16,8 +17,9 @@ public class CustomerRepository : ICustomerRepository
         return _context.Customers.FirstOrDefault(customer => customer.Id == customerId)!;
     }
 
-    public IEnumerable<Customer> GetCustomers()
+    public async Task<IEnumerable<Customer>> GetCustomersAsync()
     {
-        return _context.Customers.OrderBy(customer => customer.Name).ToList();
+        return await _context.Customers.OrderBy(customer => customer.Name).ToListAsync();
     }
+
 }

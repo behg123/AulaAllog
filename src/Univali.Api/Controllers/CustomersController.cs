@@ -92,21 +92,21 @@ public class CustomersController : MainController
 
 
     ///////////////////////////////////////
-    //  _ __ ___  __ _  __| |
-    // | '__/ _ \/ _` |/ _` |
-    // | | |  __/ (_| | (_| |
-    // |_|  \___|\__,_|\__,_|
+    //  _ __ ___  __ _  __| |   
+    // | '__/ _ \/ _` |/ _` |   
+    // | | |  __/ (_| | (_| |   
+    // |_|  \___|\__,_|\__,_|   |
     ///////////////////////////////////////
     [HttpGet]
-    public ActionResult<IEnumerable<CustomerDto>> GetCustomers()
+    public async Task<ActionResult<IEnumerable<CustomerDto>>> GetCustomers()
     {
-        var customerFromDatabase = _customerRepository.GetCustomers();
+        var customerFromDatabase = await _customerRepository.GetCustomersAsync();
         var customerDtos = _mapper.Map<IEnumerable<CustomerDto>>(customerFromDatabase);     
         return Ok(customerDtos);
 
     }
 
-    [HttpGet("{id}", Name = "GetCustomerById")]
+    [HttpGet("{customerId}", Name = "GetCustomerById")]
     public ActionResult<CustomerDto> GetCustomerById(int customerId)
     {
         var customerFromDatabase = _customerRepository.GetCustomerById(customerId);
