@@ -21,5 +21,23 @@ public class CustomerRepository : ICustomerRepository
     {
         return await _context.Customers.OrderBy(customer => customer.Name).ToListAsync();
     }
+    public async Task<Customer> CreateCustomerAsync(Customer customer)
+    {
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync();
+        return customer;
+    }
+
+    public async Task<bool> DeleteCustomerAsync(int customerId)
+    {
+        var customer = await _context.Customers.FirstOrDefault(customer => customer.Id == customerId)!;
+        if (customer == null)
+            return false;
+
+        _context.Customers.Remove(customer);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
 
 }

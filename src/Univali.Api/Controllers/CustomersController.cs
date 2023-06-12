@@ -40,28 +40,10 @@ public class CustomersController : MainController
     [HttpPost]
     public ActionResult<CustomerDto> CreateCustomer(CustomerForCreationDto customerForCreationDto)
     {
-        // if (!ModelState.IsValid)
-        // {
-        //     Response.ContentType = "application/problem+json";
-        //     var problemDetailsFactory = HttpContext.RequestServices.GetRequiredService<ProblemDetailsFactory>();
-        //     var validationProblemDetails = problemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState);
-        //     validationProblemDetails.Status = StatusCodes.Status422UnprocessableEntity;
-        //     return UnprocessableEntity(validationProblemDetails);
-        // }
-
         var customerEntity = _mapper.Map<Customer>(customerForCreationDto);
-        _context.Customers.Add(customerEntity);
-        _context.SaveChanges();
-
+        var createdCustomer = await _customerRepository.CreateCustomerAsync(customerEntity);
         var customerToReturn = _mapper.Map<CustomerDto>(customerEntity);
-
-
-        return CreatedAtRoute
-        (
-            "GetCustomerById",
-            new { id = customerToReturn.Id },
-            customerToReturn
-        );
+        return CreatedAtRoute("GetCustomerById", new { id = customerToReturn.Id },customerToReturn);
     }
 
     [HttpPost("with-addresses")]
@@ -109,7 +91,7 @@ public class CustomersController : MainController
     [HttpGet("{customerId}", Name = "GetCustomerById")]
     public ActionResult<CustomerDto> GetCustomerById(int customerId)
     {
-        var customerFromDatabase = _customerRepository.GetCustomerById(customerId);
+        var customerFromDatabase = await _customerRepository.GetCustomersAsync();
         if (customerFromDatabase == null) return NotFound();
         var customerToReturn = _mapper.Map<CustomerDto>(customerFromDatabase);
         return Ok(customerToReturn);
@@ -118,7 +100,7 @@ public class CustomersController : MainController
     [HttpGet("with-addresses/{id}", Name = "GetCustomerWithAddressesById")]
     public ActionResult<CustomerWithAddressesDto> GetCustomerWithAddressesById(int id)
     {
-        var customerFromDatabase = FindCustomerById(id);
+        var customerFromDatabase = await _customerRepository.GetCustomersAsync();
         if (customerFromDatabase == null) return NotFound();
         var customerToReturn = _mapper.Map<CustomerDto>(customerFromDatabase);
         return Ok(customerToReturn);
@@ -170,21 +152,14 @@ public class CustomersController : MainController
     {
         if (customerId != customerWithAddressesForUpdateDto.Id) return BadRequest();
 
-        var customerFromDatabase = _context.Customers.Include(customer => customer.Addresses).FirstOrDefault(c => c.Id == customerId);
+        var customerFromDatabase = await _customerRepository.GetCustomerById(id);
         if (customerFromDatabase == null) return NotFound();
 
         _mapper.Map(customerWithAddressesForUpdateDto, customerFromDatabase);
         _context.SaveChanges();
 
-        foreach (var addressDto in customerWithAddressesForUpdateDto.Addresses)
-        {
-            var addressFromDatabase = customerFromDatabase.Addresses.FirstOrDefault(address => address.Id == addressDto.Id);
-            
-            if (addressFromDatabase != null)
-            {
-                _mapper.Map(addressDto, addressFromDatabase);
-            }
-        }
+        _mapper.Map(customerForUpdateDto, existingCustomer);
+        await _customerRepository.UpdateCustomerAsync(existingCustomer);
 
         return NoContent();
     }
@@ -225,10 +200,8 @@ public class CustomersController : MainController
     [HttpDelete("{id}")]
     public ActionResult<CustomerDto> DeleteCustomer(int id)
     {
-        var customerFromDatabase = FindCustomerById(id);
-        if (customerFromDatabase == null) return NotFound();
-        _context.Customers.Remove(customerFromDatabase);
-        _context.SaveChanges();
+        var deleted = await _customerRepository.DeleteCustomerAsync(id);
+        if (!deleted) return NotFound();
 
         return NoContent();
     }
