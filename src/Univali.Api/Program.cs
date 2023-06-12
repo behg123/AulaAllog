@@ -5,6 +5,8 @@ using Univali.Api;
 using Univali.Api.Configuration;
 using Univali.Api.DbContexts;
 using Univali.Api.Extensions;
+using Univali.Api.Features.Customers.Commands.CreateCustomer;
+using Univali.Api.Features.Customers.Queries.GetCustomerDetail;
 using Univali.Api.Repositores;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +20,8 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddSingleton<Data>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddTransient<IGetCustomerDetailQueryHandler, GetCustomerDetailQueryHandler>(); 
+builder.Services.AddTransient<ICreateCustomerCommandHandler, CreateCustomerCommandHandler>();
 builder.Services.AddDbContext<CustomerContext>(options =>
 {
     options.UseNpgsql("Host=localhost;Database=Univali;Username=postgres;Password=123456");

@@ -154,7 +154,7 @@ public class AddressesController : MainController
         var customerFromDatabase = _data.Customers
             .FirstOrDefault(customer => customer.Id == customerId);
         if (customerFromDatabase == null) return null!;
-        return customerFromDatabase.Addresses.FirstOrDefault(address => address.Id == addressId);
+        return customerFromDatabase.Addresses.FirstOrDefault(address => address.Id == addressId)!;
     }
 
     private Customer FindCustomerByCpf(String cpf)

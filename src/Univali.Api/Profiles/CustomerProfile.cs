@@ -1,4 +1,7 @@
 using AutoMapper;
+using Univali.Api.Entities;
+using Univali.Api.Features.Customers.Commands.CreateCustomer;
+using Univali.Api.Features.Customers.Queries.GetCustomerDetail;
 
 namespace Univali.Api.Profiles;
 
@@ -13,19 +16,20 @@ public class CustomerProfile : Profile
           Se a propriedade não existir é ignorada
         */
         CreateMap<Entities.Customer, Models.CustomerDto>();
-        CreateMap<Entities.Address, Models.AddressDto>(); 
-        CreateMap<Entities.Customer, Models.CustomerWithAddressesDto>();
-        CreateMap<Entities.Customer, Models.CustomerForPatchDto>();
-        CreateMap<Entities.Address, Models.AddressDto>();
 
-        CreateMap<Models.AddressForCreationDto, Entities.Address>();
-        CreateMap<Models.AddressDto, Entities.Address>(); 
+        CreateMap<Entities.Customer, Models.CustomerForPatchDto>();
+
         CreateMap<Models.CustomerWithAddressesDto, Entities.Customer>();
         CreateMap<Models.CustomerWithAddressesForUpdateDto, Entities.Customer>();
         CreateMap<Models.CustomerForCreationDto, Entities.Customer>();
         CreateMap<Models.CustomerForUpdateDto, Entities.Customer>();
         CreateMap<Models.CustomerWithAddressesForUpdateDto, Entities.Customer>();
         CreateMap<Models.CustomerForPatchDto, Entities.Customer>();
-        CreateMap<Models.AddressForUpdateDto, Entities.Address>();
+
+        //Novos
+        CreateMap<Customer, GetCustomerDetailDto>();
+        CreateMap<CreateCustomerCommand, Customer>();
+        CreateMap<GetCustomerDetailDto, Customer>();
+        CreateMap<Customer, CreateCustomerCommand>();
     }
 }
