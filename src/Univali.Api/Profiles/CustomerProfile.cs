@@ -9,6 +9,9 @@ using Univali.Api.Features.Queries.GetCustomerWithAddresses;
 using Univali.Api.Features.Queries.GetCustomerByCpf;
 using Univali.Api.Features.Commands.UpdateCustomer;
 using Univali.Api.Features.Commands.UpdateCustomerWithAddresses;
+using Univali.Api.Features.Commands.CreateCustomer.DeleteCustomer;
+using Univali.Api.Features.Customers.Commands.DeleteCustomer;
+using Univali.Api.Features.Commands.CreateCustomer.UpdateCustomerWithAddresses;
 
 namespace Univali.Api.Profiles;
 
@@ -58,6 +61,11 @@ public class CustomerProfile : Profile
         CreateMap<CustomerWithAddressesForUpdateDto, UpdateCustomerWithAddressesCommand>();
         CreateMap<UpdateCustomerWithAddressesCommand, Customer>();
         CreateMap<CustomerWithAddressesForUpdateDto, UpdateCustomerCommand>();
+        CreateMap<DeleteCustomerCommand, Customer>();
+        CreateMap<Customer, DeleteCustomerDto>();
+        CreateMap<Customer, UpdateCustomerWithAddressesDto>();
+
+
 
 
 

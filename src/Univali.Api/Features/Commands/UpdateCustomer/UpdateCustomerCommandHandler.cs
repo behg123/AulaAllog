@@ -21,10 +21,8 @@ namespace Univali.Api.Features.CommandHandlers.UpdateCustomer
         {
             var customerFromDatabase = await _customerRepository.GetCustomerByIdAsync(request.Id);
 
-            if (customerFromDatabase == null)
-            {
-                return null!;
-            }
+            if (customerFromDatabase == null) return null!;
+            
             _mapper.Map(request, customerFromDatabase);
 
             await _customerRepository.SaveChangesAsync();

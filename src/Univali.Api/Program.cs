@@ -7,10 +7,13 @@ using Univali.Api.DbContexts;
 using Univali.Api.Extensions;
 using Univali.Api.Repositories;
 using Univali.Api.Features.Queries.GetCustomers;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.ConfigureKestrel(options => {
+builder.WebHost.ConfigureKestrel(options =>
+{
     options.ListenLocalhost(5000);
 });
 
@@ -19,14 +22,31 @@ builder.Services.AddSingleton<Data>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
 builder.Services.AddLogging();
+builder.Services.AddAuthentication("Bearer").AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new()
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Authentication:Issuer"],
+        ValidAudience = builder.Configuration["Authentication:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Authentication:SecretKey"]!)
+        )
+
+    };
+});
+
 builder.Services.AddDbContext<CustomerContext>(options =>
 {
     options
-    .UseNpgsql("Host=localhost;Database=Univali;Username=postgres;Password=123");
+    .UseNpgsql("Host=localhost;Database=Univali;Username=postgres;Password=123456");
 }
 );
 
-builder.Services.AddControllers(options => {
+builder.Services.AddControllers(options =>
+{
     options.InputFormatters.Insert(0, MyJPIF.GetJsonPatchInputFormatter());
 })
 
@@ -87,7 +107,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
 
 app.MapControllers();
 

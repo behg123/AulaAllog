@@ -1,16 +1,11 @@
 using AutoMapper;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.Options;
-using Microsoft.EntityFrameworkCore;
 using Univali.Api.DbContexts;
 using Univali.Api.Entities;
 using Univali.Api.Models;
 using Univali.Api.Repositories;
 using Univali.Api.Features.Customers.Commands.CreateCustomer;
-using Univali.Api.Features.Commands.CreateCustomer.WithAddresses;
 using Univali.Api.Features.Queries.GetCustomers;
 using Univali.Api.Features.Customers.Queries.GetCustomerDetail;
 using MediatR;
@@ -18,12 +13,15 @@ using Univali.Api.Features.Customers.Queries.GetCustomerWithAddresses;
 using Univali.Api.Features.Queries.GetCustomerByCpf;
 using Univali.Api.Features.Queries.GetCustomersWithAddresses;
 using Univali.Api.Features.Commands.UpdateCustomer;
+using Univali.Api.Features.Commands.CreateCustomer.DeleteCustomer;
+using Microsoft.AspNetCore.Authorization;
 using Univali.Api.Features.Commands.UpdateCustomerWithAddresses;
 
 namespace Univali.Api.Controllers;
 
 [ApiController]
 [Route("Api/customers")]
+[Authorize]
 public class CustomersController : MainController
 {
     private readonly Data _data;
@@ -145,13 +143,12 @@ public class CustomersController : MainController
     [HttpPut("with-addresses/{customerId}")]
     public async Task<ActionResult> UpdateCustomerWithAddresses(int customerId, CustomerWithAddressesForUpdateDto customerWithAddressesForUpdateDto)
     {
-        if (customerId != customerWithAddressesForUpdateDto.Id)
-            return BadRequest();
+        if (customerId != customerWithAddressesForUpdateDto.Id) return BadRequest();
 
-        var updateCustomerCommand = _mapper.Map<UpdateCustomerCommand>(customerWithAddressesForUpdateDto);
-        updateCustomerCommand.Id = customerId;
+        var updateCustomerWithAddressesCommand = _mapper.Map<UpdateCustomerWithAddressesCommand>(customerWithAddressesForUpdateDto);
+        updateCustomerWithAddressesCommand.Id = customerId;
 
-        var updatedCustomer = await _mediator.Send(updateCustomerCommand);
+        var updatedCustomer = await _mediator.Send(updateCustomerWithAddressesCommand);
 
         if (updatedCustomer == null)
         {
@@ -198,8 +195,11 @@ public class CustomersController : MainController
     [HttpDelete("{id}")]
     public async Task<ActionResult<CustomerDto>> DeleteCustomer(int id)
     {
-        var deleted = await _customerRepository.DeleteCustomerAsync(id);
-        if (!deleted) return NotFound();
+        var deleteCustomerCommand = new DeleteCustomerCommand { Id = id };
+        var deleted = await _mediator.Send(deleteCustomerCommand);
+
+        if (deleted == null)
+            return NotFound();
 
         return NoContent();
     }

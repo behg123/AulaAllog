@@ -5,6 +5,7 @@ namespace Univali.Api.Repositories;
 public interface ICustomerRepository
 {
     Task<Customer?> GetCustomerByIdAsync(int customerId);
+    Task<Customer?> GetCustomerWithAddressesByIdAsync(int customerId);
 
     Task<IEnumerable<Customer>> GetCustomersAsync();
     Task<IEnumerable<Customer>> GetCustomersWithAddressesAsync();
@@ -12,6 +13,6 @@ public interface ICustomerRepository
 
     Task<Customer?> FindCustomerByCpf(string cpf);
     void AddCustomer(Customer customer);
-    Task<bool> DeleteCustomerAsync(int customerId);
+    void DeleteCustomer(int customerId);
     Task<bool> SaveChangesAsync();
 }

@@ -17,13 +17,20 @@ public class CustomerRepository : ICustomerRepository
         return await _context.Customers.FirstOrDefaultAsync(customer => customer.Id == customerId);
     }
 
+    public async Task<Customer?> GetCustomerWithAddressesByIdAsync(int customerId){
+        return await _context.Customers
+            .Include(customer => customer.Addresses)
+            .FirstOrDefaultAsync(customer => customer.Id == customerId);
+
+    }
+
     public async Task<IEnumerable<Customer>> GetCustomersAsync()
     {
-        return await _context.Customers.OrderBy(customer => customer.Name).ToListAsync();
+        return await _context.Customers.ToListAsync();
     }
     public async Task<IEnumerable<Customer>> GetCustomersWithAddressesAsync()
     {
-        return await _context.Customers.OrderBy(customer => customer.Name).Include(c => c.Addresses).ToListAsync();
+        return await _context.Customers.Include(c => c.Addresses).ToListAsync();
     }
 
     public void AddCustomer(Customer customer)
@@ -31,15 +38,11 @@ public class CustomerRepository : ICustomerRepository
         _context.Customers.Add(customer);
     }
 
-    public async Task<bool> DeleteCustomerAsync(int customerId)
+    public void DeleteCustomer(int customerId)
     {
         var customer = _context.Customers.FirstOrDefault(customer => customer.Id == customerId)!;
-        if (customer == null)
-            return false;
+        if (customer != null) _context.Customers.Remove(customer);
 
-        _context.Customers.Remove(customer);
-        await _context.SaveChangesAsync();
-        return true;
     }
     public async Task<bool> SaveChangesAsync()
     {
