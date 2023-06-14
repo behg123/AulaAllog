@@ -5,71 +5,71 @@ using Univali.Api;
 using Univali.Api.Configuration;
 using Univali.Api.DbContexts;
 using Univali.Api.Extensions;
-using Univali.Api.Repositores;
+using Univali.Api.Repositories;
+using Univali.Api.Features.Queries.GetCustomers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.ConfigureKestrel(options =>
-{
+builder.WebHost.ConfigureKestrel(options => {
     options.ListenLocalhost(5000);
 });
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
 builder.Services.AddSingleton<Data>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
+builder.Services.AddLogging();
 builder.Services.AddDbContext<CustomerContext>(options =>
 {
-    options.UseNpgsql("Host=localhost;Database=Univali;Username=postgres;Password=123456");
-});
+    options
+    .UseNpgsql("Host=localhost;Database=Univali;Username=postgres;Password=123");
+}
+);
 
-
-builder.Services.AddControllers(options =>
-{
+builder.Services.AddControllers(options => {
     options.InputFormatters.Insert(0, MyJPIF.GetJsonPatchInputFormatter());
-}).ConfigureApiBehaviorOptions(setupAction =>
-       {
-           setupAction.InvalidModelStateResponseFactory = context =>
-           {
-               // Cria a fábrica de um objeto de detalhes de problema de validação
-               var problemDetailsFactory = context.HttpContext.RequestServices
-                   .GetRequiredService<ProblemDetailsFactory>();
+})
 
 
-               // Cria um objeto de detalhes de problema de validação
-               var validationProblemDetails = problemDetailsFactory
-                   .CreateValidationProblemDetails(
-                       context.HttpContext,
-                       context.ModelState);
+.ConfigureApiBehaviorOptions(setupAction =>
+{
+    setupAction.InvalidModelStateResponseFactory = context =>
+    {
+        // Cria a fábrica de um objeto de detalhes de problema de validação
+        var problemDetailsFactory = context.HttpContext.RequestServices
+            .GetRequiredService<ProblemDetailsFactory>();
 
 
-               // Adiciona informações adicionais não adicionadas por padrão
-               validationProblemDetails.Detail =
-                   "See the errors field for details.";
-               validationProblemDetails.Instance =
-                   context.HttpContext.Request.Path;
+        // Cria um objeto de detalhes de problema de validação
+        var validationProblemDetails = problemDetailsFactory
+            .CreateValidationProblemDetails(
+                context.HttpContext,
+                context.ModelState);
 
 
-               // Relata respostas do estado de modelo inválido como problemas de validação
-               validationProblemDetails.Type =
-                   "https://courseunivali.com/modelvalidationproblem";
-               validationProblemDetails.Status =
-                   StatusCodes.Status422UnprocessableEntity;
-               validationProblemDetails.Title =
-                   "One or more validation errors occurred.";
+        // Adiciona informações adicionais não adicionadas por padrão
+        validationProblemDetails.Detail =
+            "See the errors field for details.";
+        validationProblemDetails.Instance =
+            context.HttpContext.Request.Path;
 
 
-               return new UnprocessableEntityObjectResult(
-                   validationProblemDetails)
-               {
-                   ContentTypes = { "application/problem+json" }
-               };
-           };
-       });
+        // Relata respostas do estado de modelo inválido como problemas de validação
+        validationProblemDetails.Type =
+            "https://courseunivali.com/modelvalidationproblem";
+        validationProblemDetails.Status =
+            StatusCodes.Status422UnprocessableEntity;
+        validationProblemDetails.Title =
+            "One or more validation errors occurred.";
 
 
-
-
+        return new UnprocessableEntityObjectResult(
+            validationProblemDetails)
+        {
+            ContentTypes = { "application/problem+json" }
+        };
+    };
+});
 
 
 
@@ -91,6 +91,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-await app.ResetDatabaseAsync();
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+await app.ResetDatabaseAsync(logger);
 
 app.Run();

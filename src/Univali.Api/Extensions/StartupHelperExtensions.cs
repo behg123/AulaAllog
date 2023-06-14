@@ -1,11 +1,13 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Univali.Api.DbContexts;
+using Microsoft.Extensions.Logging;
 
 namespace Univali.Api.Extensions;
 
 internal static class StartupHelperExtensions
 {
-   public static async Task ResetDatabaseAsync(this WebApplication app)
+   public static async Task ResetDatabaseAsync(this WebApplication app, ILogger logger)
    {
        using (var scope = app.Services.CreateScope())
        {
@@ -18,9 +20,8 @@ internal static class StartupHelperExtensions
                    await context.Database.MigrateAsync();
                }
            }
-           catch (Exception ex)
-           {
-               var logger = scope.ServiceProvider.GetRequiredService<ILogger>();
+            catch (Exception ex)
+            {
                logger.LogError(ex, "An error occurred while migrating the database.");
            }
        }
