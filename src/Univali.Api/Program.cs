@@ -5,11 +5,7 @@ using Univali.Api;
 using Univali.Api.Configuration;
 using Univali.Api.DbContexts;
 using Univali.Api.Extensions;
-using Univali.Api.Features.Customers.Commands.CreateCustomer;
-using Univali.Api.Features.Customers.Queries.GetCustomerDetail;
 using Univali.Api.Repositories;
-using Microsoft.Extensions.Logging;
-using Univali.Api.Features.Commands.CreateCustomer.WithAddresses;
 using Univali.Api.Features.Queries.GetCustomers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,9 +16,7 @@ builder.WebHost.ConfigureKestrel(options => {
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddSingleton<Data>();
-
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-builder.Services.AddTransient<IGetCustomersQueryHandler, GetCustomersQueryHandler>();
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
 builder.Services.AddLogging();
 builder.Services.AddDbContext<CustomerContext>(options =>

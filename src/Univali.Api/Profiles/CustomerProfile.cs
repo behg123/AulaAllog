@@ -4,6 +4,11 @@ using Univali.Api.Entities;
 using Univali.Api.Models;
 using Univali.Api.Features.Commands.CreateCustomer.WithAddresses;
 using Univali.Api.Features.Customers.Queries.GetCustomerDetail;
+using Univali.Api.Features.Customers.Queries.GetCustomers;
+using Univali.Api.Features.Queries.GetCustomerWithAddresses;
+using Univali.Api.Features.Queries.GetCustomerByCpf;
+using Univali.Api.Features.Commands.UpdateCustomer;
+using Univali.Api.Features.Commands.UpdateCustomerWithAddresses;
 
 namespace Univali.Api.Profiles;
 
@@ -40,6 +45,26 @@ public class CustomerProfile : Profile
         CreateMap<Customer, CreateCustomerWithAddressesDto>();
         CreateMap<Customer, GetCustomerDetailDto>();
         CreateMap<GetCustomerDetailDto, Customer>();
+        CreateMap<Customer, GetCustomersDto>();
+        CreateMap<GetCustomersDto, Customer>();
+        CreateMap<Customer, GetCustomerWithAddressesDto>();
+        CreateMap<GetCustomerWithAddressesDto, Customer>();
+        CreateMap<Customer, GetCustomerByCpfDto>();
+        CreateMap<GetCustomerByCpfDto, Customer>();
+        CreateMap<UpdateCustomerCommand, Customer>();
+        CreateMap<UpdateCustomerDto, Customer>();
+        CreateMap<Customer, UpdateCustomerDto>();
+        CreateMap<CustomerForUpdateDto, UpdateCustomerCommand>();
+        CreateMap<CustomerWithAddressesForUpdateDto, UpdateCustomerWithAddressesCommand>();
+        CreateMap<UpdateCustomerWithAddressesCommand, Customer>();
+        CreateMap<CustomerWithAddressesForUpdateDto, UpdateCustomerCommand>();
+
+
+
+
+
+
+
 
     }
 }

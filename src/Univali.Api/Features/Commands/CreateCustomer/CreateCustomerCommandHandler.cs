@@ -7,7 +7,7 @@ namespace Univali.Api.Features.Customers.Commands.CreateCustomer;
 
 // O primeiro parâmetro é o tipo da mensagem
 // O segundo parâmetro é o tipo que se espera receber.
-public class CreateCustomerCommandHandler: IRequestHandler<CreateCustomerCommand, CreateCustomerDto>
+public class CreateCustomerCommandHandler : IRequestHandler<CreateCustomerCommand, CreateCustomerDto>
 {
     private readonly ICustomerRepository _customerRepository;
     private readonly IMapper _mapper;

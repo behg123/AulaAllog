@@ -21,16 +21,14 @@ public class CustomerRepository : ICustomerRepository
     {
         return await _context.Customers.OrderBy(customer => customer.Name).ToListAsync();
     }
+    public async Task<IEnumerable<Customer>> GetCustomersWithAddressesAsync()
+    {
+        return await _context.Customers.OrderBy(customer => customer.Name).Include(c => c.Addresses).ToListAsync();
+    }
+
     public void AddCustomer(Customer customer)
     {
         _context.Customers.Add(customer);
-    }
-
-    public async Task<bool> UpdateCustomerAsync(Customer customer)
-    {
-        _context.Entry(customer).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-        return true;
     }
 
     public async Task<bool> DeleteCustomerAsync(int customerId)
@@ -48,5 +46,16 @@ public class CustomerRepository : ICustomerRepository
         return (await _context.SaveChangesAsync() > 0);
     }
 
+    public async Task<Customer?> GetCustomerWithAddressesAsync(int id)
+    {
+        return await _context.Customers
+            .Include(c => c.Addresses)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
+
+    public async Task<Customer?> FindCustomerByCpf(string cpf)
+    {
+        return await _context.Customers.FirstOrDefaultAsync(c => c.Cpf == cpf);
+    }
 
 }
